@@ -82,21 +82,41 @@ function test_cas(mc)
     @assert false == try cas(mc, "cas_key", 3, casval); end
 end
 
+type mytype
+    i::Int
+    s::String
+    k::Dict
+end
+
+function test_julia_type(mc)
+    t = mytype(10, "hello", {1=>"A", 2=>"B"})
+    set(mc, "jul", t)
+    t1 = get(mc, "jul")
+    @assert t.i == t1.i
+    @assert t.s == t1.s
+    @assert t.k == t1.k
+end
+
 mc = test_begin()
-println("begin test")
+println("began test")
 
 test_set_get(mc)
-println("test_set_get")
+println("tested set get")
 
 test_touch(mc)
-println("test_touch")
+println("tested touch")
 
 test_incr_decr(mc)
-println("test_incr_decr")
+println("tested incr decr")
 
 test_cas(mc)
-println("test_cas")
+println("tested cas")
+
+test_julia_type(mc)
+println("tested julia type")
 
 test_end(mc)
 println("end of test")
+
+exit()
 

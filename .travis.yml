@@ -12,6 +12,9 @@ before_install:
   - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
   - sudo apt-get update -qq -y
   - sudo apt-get install libpcre3-dev julia -y
+  - sudo apt-get install memcached
 script:
+  - memcached -d
   - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Memcache"))`); Pkg.pin("Memcache"); Pkg.resolve()'
   - julia -e 'using Memcache; @assert isdefined(:Memcache); @assert typeof(Memcache) === Module'
+  - julia ./test/test.jl

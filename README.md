@@ -2,33 +2,86 @@
 
 [![Build Status](https://travis-ci.org/tanmaykm/Memcache.jl.png)](https://travis-ci.org/tanmaykm/Memcache.jl)
 
-### Type MemcacheClient
-A pure Julia client for memcached servers. All memcached commands [(https://code.google.com/p/memcached/wiki/NewCommands)](https://code.google.com/p/memcached/wiki/NewCommands) as of memcached version 1.4.17 are implemented.
+A pure Julia client for memcached servers. All [memcached commands](https://code.google.com/p/memcached/wiki/NewCommands) as of memcached version 1.4.17 are implemented.
 
-Strings and numbers are stored in simple ASCII format to be interoperable with other client libraries. Any other julia type can be set as value as long as they are serializable.
+Both numbers and strings are stored in plain string format so as to be interoperable with other memcached client libraries. Other Julia types are stored in their serialized form.
 
-### Type MemcacheClients
-Wraps over multiple `MemcacheClient` instances to provide distributed cache. Operations are routed to appropriate server based on hash value of the key.
+Type `MemcacheClient` represents a connection to a single memcached server instance.
+
+Type `MemcacheClients` wraps over multiple `MemcacheClient` instances to provide distributed cache across more than one memcached server instances. Operations are routed to appropriate server based on key hash value.
+
 
 ### Methods
-- Setting and getting data: set, cas, add, replace, append, prepend, incr, decr, get, touch
-- Administration: stats, version, flush\_all, close, slabs\_reassign, slabs\_automove, quit
+- Setting and getting data: `set`, `cas`, `add`, `replace`, `append`, `prepend`, `incr`, `decr`, `get`, `touch`
+- Administration: `stats`, `version`, `flush_all`, `close`, `slabs_reassign`, `slabs_automove`, `quit`
 
-Example:
+All methods are supported for both `MemcacheClient` and `MemcacheClients`, but results of administration commands would return and array of responses from all servers. See memcached command documentation for details of administration commands. 
+
+Below is an illustration of using the most common commands.
+
 ````
 julia> using Memcache
 
-julia> mc = MemcacheClient("localhost", 11211)
-MemcacheClient("localhost",11211,TcpSocket(open, 0 bytes waiting),false)
+julia> # create a client connection
 
-julia> set(mc, "num1", 1)
+julia> mc = MemcacheClient("localhost", 11211);
 
-julia> incr(mc, "num1", 5)
-6
+julia> 
 
-julia> get(mc, "num1") 
-6
+julia> # simple set and get
+
+julia> set(mc, "key1", "val1")
+
+julia> set(mc, "key2", 2)
+
+julia> get(mc, "key1")
+"val1"
+
+julia> 
+
+julia> # multi get
+
+julia> get(mc, "key1", "key2")
+["key1"=>"val1","key2"=>2]
+
+julia> 
+
+julia> # increment, decrement
+
+julia> incr(mc, "key2", 8)
+10
+
+julia> decr(mc, "key2", 3)
+7
+
+julia> 
+
+julia> # append, prepend
+
+julia> append(mc, "key1", "--")
+
+julia> prepend(mc, "key1", "--")
+
+julia> get(mc, "key1")
+"--val1--"
+
+julia> 
+
+julia> # cas
+
+julia> res = get(mc, "key1", cas=true)
+["key1"=>("--val1--",40)]
+
+julia> val,casval = res["key1"]
+("--val1--",40)
+
+julia> cas(mc, "key1", 2, casval)
+
+julia> get(mc, "key1")
+2
 ````
+
+
 
 ### TODO
 - compression

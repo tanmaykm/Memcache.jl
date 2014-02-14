@@ -26,7 +26,8 @@ function test_end(mc)
     @assert length(stats(mc, "sizes")) >= 0
     @assert int(stats(mc, "slabs")["active_slabs"]) >= 0
 
-    close(mc)
+    # commented out to avoid julia issue #5793
+    #close(mc)
     nothing
 end
 

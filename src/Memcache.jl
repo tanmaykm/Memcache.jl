@@ -8,6 +8,11 @@ export MemcacheClients
 # not exporting add_client as it could unintentionally change hash distribution calculation in the middle of execution
 #export add_client
 
+# Julia 0.2 compatibility patch
+if isless(Base.VERSION, v"0.3.0-")
+read!(a,b) = read(a,b)
+end
+
 include("client.jl")
 include("multi.jl")
 

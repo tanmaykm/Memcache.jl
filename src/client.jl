@@ -209,7 +209,7 @@ end
 mc_recv(mc::MemcacheClient, len::Integer) = mc_recv(mc, Array(Uint8, len))
 
 function mc_recv(mc::MemcacheClient, data::Array{Uint8,1})
-    read(mc.sock, data)
+    read!(mc.sock, data)
     readline(mc.sock)
     mc.debug && println("recv: $(length(data)) bytes data")
     data

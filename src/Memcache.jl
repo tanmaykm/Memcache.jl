@@ -1,4 +1,5 @@
 module Memcache
+using Compat
 
 import Base.close, Base.touch, Base.get, Base.add, Base.replace, Base.quit
 
@@ -12,9 +13,12 @@ export MemcacheClients
 if isless(Base.VERSION, v"0.3.0-")
 read!(a,b) = read(a,b)
 end
+if isless(Base.VERSION, v"0.4.0-")
+import Base.split
+split{T<:String}(str::T, splitter; limit::Integer=0, keep::Bool=true) = split(str, splitter, limit, keep)
+end
 
 include("client.jl")
 include("multi.jl")
 
 end # module
-

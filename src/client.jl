@@ -44,8 +44,8 @@ function get(mc::MemcacheClient, key::String)
         if resp_line[1] == "VALUE"
             result_found = true
             kv = split(resp_line[2])
-            flags = int(kv[2])
-            bytes = int(kv[3])
+            flags = @compat(parse(Int, kv[2]))
+            bytes = @compat(parse(Int, kv[3]))
             result = mc_deserialize(mc_recv(mc, bytes), flags)
         else
             cont = false
@@ -65,9 +65,9 @@ function get(mc::MemcacheClient, key::String...; cas::Bool=false)
         if resp_line[1] == "VALUE"
             kv = split(resp_line[2])
             key = kv[1]
-            flags = int(kv[2])
-            bytes = int(kv[3])
-            casval = cas ? int(kv[4]) : 0
+            flags = @compat(parse(Int, kv[2]))
+            bytes = @compat(parse(Int, kv[3]))
+            casval = cas ? @compat(parse(Int, kv[4])) : 0
             val = mc_deserialize(mc_recv(mc, bytes), flags)
     
             result[key] = cas ? (val, casval) : val
@@ -93,7 +93,7 @@ function incr_decr(mc::MemcacheClient, c::String, key::String, val::Integer; nor
     noreply && return
     resp_line = mc_recv(mc)
     (resp_line[1] == "NOT_FOUND") && error(resp_line[1])
-    int(resp_line[1])
+    @compat(parse(Int, resp_line[1]))
 end
 
 function touch(mc::MemcacheClient, key::String, exp::Integer; noreply::Bool=false)
@@ -163,9 +163,9 @@ function mc_deserialize(buff::Array{Uint8,1}, typ::Int)
     if 0 == typ
         return deserialize(IOBuffer(buff))
     elseif 1 == typ
-        return int(bytestring(buff))
+        return @compat(parse(Int, bytestring(buff)))
     elseif 2 == typ
-        return float(bytestring(buff))
+        return @compat(parse(Float64, bytestring(buff)))
     elseif 3 == typ
         return bytestring(buff)
     end
@@ -203,7 +203,7 @@ function mc_recv(mc::MemcacheClient)
     s = readline(mc.sock)
     mc.debug && println("recv: $s")
     s = rstrip(s)
-    split(s, ' ', 2)
+    split(s, ' ', limit=2)
 end
 
 mc_recv(mc::MemcacheClient, len::Integer) = mc_recv(mc, Array(Uint8, len))

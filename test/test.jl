@@ -1,4 +1,5 @@
 using Memcache
+using Compat
 
 
 function test_begin()
@@ -20,11 +21,11 @@ function test_end(mc)
     flush_all(mc)
 
     st = stats(mc)
-    @assert int(st["get_hits"]) > 0
+    @assert parse(Int, st["get_hits"]) > 0
 
     @assert length(stats(mc, "items")) >= 0
     @assert length(stats(mc, "sizes")) >= 0
-    @assert int(stats(mc, "slabs")["active_slabs"]) >= 0
+    @assert parse(Int, stats(mc, "slabs")["active_slabs"]) >= 0
 
     # commented out to avoid julia issue #5793
     #close(mc)
@@ -80,7 +81,7 @@ function test_cas(mc)
     @assert val == 2
     @assert casval != casval2
 
-    @assert false == try cas(mc, "cas_key", 3, casval); end
+    @assert false == try cas(mc, "cas_key", 3, casval); true; catch; false; end
 end
 
 type mytype
@@ -90,7 +91,7 @@ type mytype
 end
 
 function test_julia_type(mc)
-    t = mytype(10, "hello", {1=>"A", 2=>"B"})
+    t = mytype(10, "hello", @compat(Dict(1=>"A", 2=>"B")))
     set(mc, "jul", t)
     t1 = get(mc, "jul")
     @assert t.i == t1.i

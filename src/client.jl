@@ -1,10 +1,10 @@
 type MemcacheClient
-    host::String
+    host::AbstractString
     port::Integer
     sock::IO
     debug::Bool
 
-    function MemcacheClient(host::String="localhost", port::Integer=11211)
+    function MemcacheClient(host::AbstractString="localhost", port::Integer=11211)
         sock = connect(host, port)
         new(host, port, sock, false)
     end
@@ -13,13 +13,13 @@ end
 close(mc::MemcacheClient) = close(mc.sock)
 quit(mc::MemcacheClient) = mc_send(mc, "quit")
 
-for f in [:set, :add, :replace, :append, :prepend]
-    @eval ($f)(mc::MemcacheClient, key::String, val; exptime::Integer=0, cas::Integer=-1, noreply::Bool=false) = _setval(mc, string($f), key, val, exptime=exptime, cas=cas, noreply=noreply)
+for f in ("set", "add", "replace", "append", "prepend")
+    @eval ($(symbol(f)))(mc::MemcacheClient, key::AbstractString, val; exptime::Integer=0, cas::Integer=-1, noreply::Bool=false) = _setval(mc, $f, key, val, exptime=exptime, cas=cas, noreply=noreply)
 end
 
-cas(mc::MemcacheClient, key::String, val, cas::Integer; exptime::Integer=0, noreply::Bool=false) = _setval(mc, "cas", key, val, exptime=exptime, cas=cas, noreply=noreply)
+cas(mc::MemcacheClient, key::AbstractString, val, cas::Integer; exptime::Integer=0, noreply::Bool=false) = _setval(mc, "cas", key, val, exptime=exptime, cas=cas, noreply=noreply)
 
-function _setval(mc::MemcacheClient, cmd::String, key::String, val; exptime::Integer=0, cas::Integer=-1, noreply::Bool=false)
+function _setval(mc::MemcacheClient, cmd::AbstractString, key::AbstractString, val; exptime::Integer=0, cas::Integer=-1, noreply::Bool=false)
     flags, buff = mc_serialize(val)
     args = [key, flags, exptime, length(buff)]
     (cas != -1) && push!(args, cas)
@@ -33,7 +33,7 @@ function _setval(mc::MemcacheClient, cmd::String, key::String, val; exptime::Int
     error(resp_line[1])
 end
 
-function get(mc::MemcacheClient, key::String)
+function get(mc::MemcacheClient, key::AbstractString)
     mc_send(mc, "get", key)
     cont = true
 
@@ -54,12 +54,12 @@ function get(mc::MemcacheClient, key::String)
     result_found ? result : error("NOT_FOUND")
 end
 
-function get(mc::MemcacheClient, key::String...; cas::Bool=false)
+function get(mc::MemcacheClient, key::AbstractString...; cas::Bool=false)
     c = (cas != nothing) ? "gets" : "get"
     mc_send(mc, c, key...)
 
     cont = true
-    result = Dict{String,Any}()
+    result = Dict{AbstractString,Any}()
     while cont
         resp_line = validate(mc_recv(mc), "VALUE", "END")
         if resp_line[1] == "VALUE"
@@ -78,7 +78,7 @@ function get(mc::MemcacheClient, key::String...; cas::Bool=false)
     result
 end
 
-function delete(mc::MemcacheClient, key::String; noreply::Bool=false)
+function delete(mc::MemcacheClient, key::AbstractString; noreply::Bool=false)
     mc_send(mc, "delete", key, noreply ? "noreply" : nothing)
     noreply && return
     resp_line = validate(mc_recv(mc), "DELETED", "NOT_FOUND")
@@ -86,9 +86,9 @@ function delete(mc::MemcacheClient, key::String; noreply::Bool=false)
     nothing
 end
 
-incr(mc::MemcacheClient, key::String, val::Integer; noreply::Bool=false) = incr_decr(mc, "incr", key, val, noreply=noreply)
-decr(mc::MemcacheClient, key::String, val::Integer; noreply::Bool=false) = incr_decr(mc, "decr", key, val, noreply=noreply)
-function incr_decr(mc::MemcacheClient, c::String, key::String, val::Integer; noreply::Bool=false)
+incr(mc::MemcacheClient, key::AbstractString, val::Integer; noreply::Bool=false) = incr_decr(mc, "incr", key, val, noreply=noreply)
+decr(mc::MemcacheClient, key::AbstractString, val::Integer; noreply::Bool=false) = incr_decr(mc, "decr", key, val, noreply=noreply)
+function incr_decr(mc::MemcacheClient, c::AbstractString, key::AbstractString, val::Integer; noreply::Bool=false)
     mc_send(mc, c, key, val, noreply ? "noreply" : nothing)
     noreply && return
     resp_line = mc_recv(mc)
@@ -96,7 +96,7 @@ function incr_decr(mc::MemcacheClient, c::String, key::String, val::Integer; nor
     @compat(parse(Int, resp_line[1]))
 end
 
-function touch(mc::MemcacheClient, key::String, exp::Integer; noreply::Bool=false)
+function touch(mc::MemcacheClient, key::AbstractString, exp::Integer; noreply::Bool=false)
     mc_send(mc, "touch", key, exp, noreply ? "noreply" : nothing) 
     noreply && return
     resp_line = validate(mc_recv(mc), "TOUCHED", "NOT_FOUND")
@@ -113,7 +113,7 @@ end
 function stats(mc::MemcacheClient, args...)
     mc_send(mc, "stats", args...)
 
-    result = Dict{String, String}()
+    result = Dict{AbstractString, AbstractString}()
     
     cont = true
     while cont
@@ -155,9 +155,9 @@ end
 const ser_pipe = PipeBuffer()
 mc_serialize(val) = (mc_serialize(ser_pipe, val), takebuf_array(ser_pipe))
 mc_serialize(s, val) = (serialize(s, val); 0)
-mc_serialize(s, val::Integer) = (print(s, val); 1)
-mc_serialize(s, val::FloatingPoint) = (print(s, val); 2)
-mc_serialize(s, val::String) = (print(s, val); 3)
+mc_serialize{T<:Integer}(s, val::T) = (print(s, val); 1)
+mc_serialize{T<:FloatingPoint}(s, val::T) = (print(s, val); 2)
+mc_serialize{T<:AbstractString}(s, val::T) = (print(s, val); 3)
 
 function mc_deserialize(buff::Array{Uint8,1}, typ::Int)
     if 0 == typ
@@ -177,7 +177,7 @@ end
 # memcache send/recv protocol
 const CMD_DLM = "\r\n"
 
-function mc_send(mc::MemcacheClient, cmd::String, args...)
+function mc_send(mc::MemcacheClient, cmd::AbstractString, args...)
     iob = IOBuffer()
     write(iob, cmd)
     for arg in args

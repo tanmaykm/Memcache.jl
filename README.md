@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/tanmaykm/Memcache.jl.png)](https://travis-ci.org/tanmaykm/Memcache.jl)
 
-A pure Julia client for memcached servers. All [memcached commands](https://code.google.com/p/memcached/wiki/NewCommands) as of memcached version 1.4.17 are implemented.
+A pure Julia client for memcached servers. All [memcached commands](https://github.com/memcached/memcached/wiki/Commands) as of memcached version 1.4.17 are implemented.
 
 Both numbers and strings are stored in plain string format so as to be interoperable with other memcached client libraries. Other Julia types are stored in their serialized form.
 
@@ -19,7 +19,7 @@ All methods are supported for both `MemcacheClient` and `MemcacheClients`, but r
 
 Below is an illustration of using the most common commands.
 
-````
+````julia
 julia> using Memcache
 
 julia> # create a client connection

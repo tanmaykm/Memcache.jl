@@ -86,7 +86,7 @@ end
 
 type mytype
     i::Int
-    s::String
+    s::AbstractString
     k::Dict
 end
 

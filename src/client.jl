@@ -14,7 +14,7 @@ close(mc::MemcacheClient) = close(mc.sock)
 quit(mc::MemcacheClient) = mc_send(mc, "quit")
 
 for f in ("set", "add", "replace", "append", "prepend")
-    @eval ($(symbol(f)))(mc::MemcacheClient, key::AbstractString, val; exptime::Integer=0, cas::Integer=-1, noreply::Bool=false) = _setval(mc, $f, key, val, exptime=exptime, cas=cas, noreply=noreply)
+    @eval ($(Symbol(f)))(mc::MemcacheClient, key::AbstractString, val; exptime::Integer=0, cas::Integer=-1, noreply::Bool=false) = _setval(mc, $f, key, val, exptime=exptime, cas=cas, noreply=noreply)
 end
 
 cas(mc::MemcacheClient, key::AbstractString, val, cas::Integer; exptime::Integer=0, noreply::Bool=false) = _setval(mc, "cas", key, val, exptime=exptime, cas=cas, noreply=noreply)
@@ -156,18 +156,18 @@ const ser_pipe = PipeBuffer()
 mc_serialize(val) = (mc_serialize(ser_pipe, val), takebuf_array(ser_pipe))
 mc_serialize(s, val) = (serialize(s, val); 0)
 mc_serialize{T<:Integer}(s, val::T) = (print(s, val); 1)
-mc_serialize{T<:FloatingPoint}(s, val::T) = (print(s, val); 2)
+mc_serialize{T<:AbstractFloat}(s, val::T) = (print(s, val); 2)
 mc_serialize{T<:AbstractString}(s, val::T) = (print(s, val); 3)
 
-function mc_deserialize(buff::Array{Uint8,1}, typ::Int)
+function mc_deserialize(buff::Array{UInt8,1}, typ::Int)
     if 0 == typ
         return deserialize(IOBuffer(buff))
     elseif 1 == typ
-        return @compat(parse(Int, bytestring(buff)))
+        return @compat(parse(Int, byte2str(buff)))
     elseif 2 == typ
-        return @compat(parse(Float64, bytestring(buff)))
+        return @compat(parse(Float64, byte2str(buff)))
     elseif 3 == typ
-        return bytestring(buff)
+        return byte2str(buff)
     end
     error("unknown data type $typ")
 end
@@ -192,7 +192,7 @@ function mc_send(mc::MemcacheClient, cmd::AbstractString, args...)
     nothing
 end
 
-function mc_send(mc::MemcacheClient, data::Array{Uint8})
+function mc_send(mc::MemcacheClient, data::Array{UInt8})
     write(mc.sock, data)
     write(mc.sock, CMD_DLM)
     mc.debug && println("send: $(length(data)) bytes data")
@@ -206,9 +206,9 @@ function mc_recv(mc::MemcacheClient)
     split(s, ' ', limit=2)
 end
 
-mc_recv(mc::MemcacheClient, len::Integer) = mc_recv(mc, Array(Uint8, len))
+mc_recv(mc::MemcacheClient, len::Integer) = mc_recv(mc, Array(UInt8, len))
 
-function mc_recv(mc::MemcacheClient, data::Array{Uint8,1})
+function mc_recv(mc::MemcacheClient, data::Array{UInt8,1})
     read!(mc.sock, data)
     readline(mc.sock)
     mc.debug && println("recv: $(length(data)) bytes data")

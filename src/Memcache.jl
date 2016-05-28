@@ -17,6 +17,11 @@ if isless(Base.VERSION, v"0.4.0-")
 import Base.split
 split{T<:AbstractString}(str::T, splitter; limit::Integer=0, keep::Bool=true) = split(str, splitter, limit, keep)
 end
+if isless(Base.VERSION, v"0.5.0-")
+byte2str(x) = bytestring(x)
+else
+byte2str(x) = String(x)
+end
 
 include("client.jl")
 include("multi.jl")

@@ -1,6 +1,7 @@
 # Julia Memcache Client
 
 [![Build Status](https://travis-ci.org/tanmaykm/Memcache.jl.png)](https://travis-ci.org/tanmaykm/Memcache.jl)
+[![Coverage Status](https://coveralls.io/repos/github/tanmaykm/Memcache.jl/badge.svg?branch=master)](https://coveralls.io/github/tanmaykm/Memcache.jl?branch=master)
 
 A pure Julia client for memcached servers. All [memcached commands](https://github.com/memcached/memcached/wiki/Commands) as of memcached version 1.4.17 are implemented.
 

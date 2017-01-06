@@ -153,7 +153,7 @@ end
 # plain ascii format for numbers and strings so that they are interoperable with other implementations.
 # julia serialization for other types.
 const ser_pipe = PipeBuffer()
-mc_serialize(val) = (mc_serialize(ser_pipe, val), takebuf_array(ser_pipe))
+mc_serialize(val) = (mc_serialize(ser_pipe, val), take!(ser_pipe))
 mc_serialize(s, val) = (serialize(s, val); 0)
 mc_serialize{T<:Integer}(s, val::T) = (print(s, val); 1)
 mc_serialize{T<:AbstractFloat}(s, val::T) = (print(s, val); 2)
@@ -186,9 +186,9 @@ function mc_send(mc::MemcacheClient, cmd::AbstractString, args...)
         print(iob, arg)
     end
     write(iob, CMD_DLM)
-    cmdline = takebuf_string(iob)
+    cmdline = take!(iob)
     write(mc.sock, cmdline)
-    mc.debug && println("send: $cmdline")
+    mc.debug && println("send: ", Compat.String(cmdline))
     nothing
 end
 

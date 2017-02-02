@@ -206,7 +206,7 @@ function mc_recv(mc::MemcacheClient)
     split(s, ' ', limit=2)
 end
 
-mc_recv(mc::MemcacheClient, len::Integer) = mc_recv(mc, Array(UInt8, len))
+mc_recv(mc::MemcacheClient, len::Integer) = mc_recv(mc, Array{UInt8,1}(len))
 
 function mc_recv(mc::MemcacheClient, data::Array{UInt8,1})
     read!(mc.sock, data)

@@ -1,4 +1,4 @@
-type MemcacheClients
+struct MemcacheClients
     clients::Vector{MemcacheClient}
 
     function MemcacheClients(clients::Vector{MemcacheClient}=MemcacheClient[])

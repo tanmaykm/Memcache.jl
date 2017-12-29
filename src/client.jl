@@ -1,4 +1,4 @@
-type MemcacheClient
+mutable struct MemcacheClient
     host::AbstractString
     port::Integer
     sock::IO
@@ -44,8 +44,8 @@ function get(mc::MemcacheClient, key::AbstractString)
         if resp_line[1] == "VALUE"
             result_found = true
             kv = split(resp_line[2])
-            flags = @compat(parse(Int, kv[2]))
-            bytes = @compat(parse(Int, kv[3]))
+            flags = parse(Int, kv[2])
+            bytes = parse(Int, kv[3])
             result = mc_deserialize(mc_recv(mc, bytes), flags)
         else
             cont = false
@@ -65,9 +65,9 @@ function get(mc::MemcacheClient, key::AbstractString...; cas::Bool=false)
         if resp_line[1] == "VALUE"
             kv = split(resp_line[2])
             key = kv[1]
-            flags = @compat(parse(Int, kv[2]))
-            bytes = @compat(parse(Int, kv[3]))
-            casval = cas ? @compat(parse(Int, kv[4])) : 0
+            flags = parse(Int, kv[2])
+            bytes = parse(Int, kv[3])
+            casval = cas ? parse(Int, kv[4]) : 0
             val = mc_deserialize(mc_recv(mc, bytes), flags)
     
             result[key] = cas ? (val, casval) : val
@@ -93,7 +93,7 @@ function incr_decr(mc::MemcacheClient, c::AbstractString, key::AbstractString, v
     noreply && return
     resp_line = mc_recv(mc)
     (resp_line[1] == "NOT_FOUND") && error(resp_line[1])
-    @compat(parse(Int, resp_line[1]))
+    parse(Int, resp_line[1])
 end
 
 function touch(mc::MemcacheClient, key::AbstractString, exp::Integer; noreply::Bool=false)
@@ -155,19 +155,19 @@ end
 const ser_pipe = PipeBuffer()
 mc_serialize(val) = (mc_serialize(ser_pipe, val), take!(ser_pipe))
 mc_serialize(s, val) = (serialize(s, val); 0)
-mc_serialize{T<:Integer}(s, val::T) = (print(s, val); 1)
-mc_serialize{T<:AbstractFloat}(s, val::T) = (print(s, val); 2)
-mc_serialize{T<:AbstractString}(s, val::T) = (print(s, val); 3)
+mc_serialize(s, val::T) where T <: Integer = (print(s, val); 1)
+mc_serialize(s, val::T) where T <: AbstractFloat = (print(s, val); 2)
+mc_serialize(s, val::T) where T <: AbstractString = (print(s, val); 3)
 
 function mc_deserialize(buff::Array{UInt8,1}, typ::Int)
     if 0 == typ
         return deserialize(IOBuffer(buff))
     elseif 1 == typ
-        return @compat(parse(Int, byte2str(buff)))
+        return parse(Int, String(buff))
     elseif 2 == typ
-        return @compat(parse(Float64, byte2str(buff)))
+        return parse(Float64, String(buff))
     elseif 3 == typ
-        return byte2str(buff)
+        return String(buff)
     end
     error("unknown data type $typ")
 end
@@ -188,7 +188,7 @@ function mc_send(mc::MemcacheClient, cmd::AbstractString, args...)
     write(iob, CMD_DLM)
     cmdline = take!(iob)
     write(mc.sock, cmdline)
-    mc.debug && println("send: ", Compat.String(cmdline))
+    mc.debug && println("send: ", String(cmdline))
     nothing
 end
 

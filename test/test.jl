@@ -1,14 +1,20 @@
 using Memcache
-using Compat
-using Base.Test
 
+if isless(Base.VERSION, v"0.7.0-")
+using Base.Test
+else
+using Test
+end
 
 function test_begin()
     mc = MemcacheClient()
     mc.debug = true
 
     st = stats(mc)
-    @test st["version"] == version(mc)
+    @test !isempty(st["version"])
+
+    st = version(mc)
+    @test !isempty(st)
 
     flush_all(mc)
 
@@ -85,14 +91,14 @@ function test_cas(mc)
     @test false == try cas(mc, "cas_key", 3, casval); true; catch; false; end
 end
 
-type mytype
+mutable struct mytype
     i::Int
     s::AbstractString
     k::Dict
 end
 
 function test_julia_type(mc)
-    t = mytype(10, "hello", @compat(Dict(1=>"A", 2=>"B")))
+    t = mytype(10, "hello", Dict(1=>"A", 2=>"B"))
     set(mc, "jul", t)
     t1 = get(mc, "jul")
     @test t.i == t1.i

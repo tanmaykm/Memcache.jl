@@ -1,5 +1,4 @@
 module Memcache
-using Compat
 
 import Base: close, touch, get, replace, quit
 
@@ -8,20 +7,6 @@ export MemcacheClient, stats, version, flush_all, close, slabs_reassign, slabs_a
 export MemcacheClients
 # not exporting add_client as it could unintentionally change hash distribution calculation in the middle of execution
 #export add_client
-
-# Julia 0.2 compatibility patch
-if isless(Base.VERSION, v"0.3.0-")
-read!(a,b) = read(a,b)
-end
-if isless(Base.VERSION, v"0.4.0-")
-import Base.split
-split{T<:AbstractString}(str::T, splitter; limit::Integer=0, keep::Bool=true) = split(str, splitter, limit, keep)
-end
-if isless(Base.VERSION, v"0.5.0-")
-byte2str(x) = bytestring(x)
-else
-byte2str(x) = String(x)
-end
 
 include("client.jl")
 include("multi.jl")

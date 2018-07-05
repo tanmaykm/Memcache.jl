@@ -1,5 +1,9 @@
 module Memcache
 
+using Compat
+using Compat.Sockets
+using Compat.Serialization
+
 import Base: close, touch, get, replace, quit
 
 export set, cas, add, replace, append, prepend, get, touch, incr, decr, delete

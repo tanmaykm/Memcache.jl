@@ -1,10 +1,9 @@
 module Memcache
 
-using Compat
-using Compat.Sockets
-using Compat.Serialization
+using Sockets
+using Serialization
 
-import Base: close, touch, get, replace, quit
+import Base: close, touch, get, replace
 
 export set, cas, add, replace, append, prepend, get, touch, incr, decr, delete
 export MemcacheClient, stats, version, flush_all, close, slabs_reassign, slabs_automove, quit

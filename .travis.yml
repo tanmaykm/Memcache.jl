@@ -4,8 +4,7 @@ os:
   - linux
   - osx
 julia:
-  - 0.6
-  - 0.7
+  - 1.0
   - nightly
 services:
   - memcached
@@ -15,8 +14,8 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" = osx ]; then /usr/local/opt/memcached/bin/memcached -d; fi
 notifications:
   email: false
-script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); Pkg.build("Memcache"); Pkg.test("Memcache"; coverage=true)'
+#script:
+#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+#  - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("Memcache"); Pkg.test("Memcache"; coverage=true)'
 after_success:
   - julia -e 'cd(Pkg.dir("Memcache")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder());'

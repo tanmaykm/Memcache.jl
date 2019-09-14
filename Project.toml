@@ -1,0 +1,19 @@
+name = "Memcache"
+uuid = "2542163d-3f63-581c-abc1-15efe995b982"
+keywords = ["memcached", "memcache", "julia-client", "julia", "client"]
+license = "MIT"
+desc = "Julia memcached client"
+version = "0.3.1"
+
+[deps]
+Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
+Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
+
+[compat]
+julia = "≥ 1.0.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
